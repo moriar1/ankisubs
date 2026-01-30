@@ -1,0 +1,10 @@
+myenv/
+__pycache__
+*.pyc
+
+*.srt
+*.ass
+
+*.txt
+!warodai_test_excerpt.txt
+!requirements.txt
