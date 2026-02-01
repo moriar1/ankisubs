@@ -1,11 +1,12 @@
+import csv
 import sys
 import re
 from deep_translator import GoogleTranslator  # ,MyMemoryTranslator
 from jamdict import Jamdict
 from pathlib import Path
 
-# translator = MyMemoryTranslator(source='japanese', target='english')
-translator = GoogleTranslator(source="ja", target="en")
+# translator = MyMemoryTranslator(source='japanese', target='russian')
+translator = GoogleTranslator(source="ja", target="ru")
 jmd = Jamdict()
 
 
@@ -44,16 +45,46 @@ def get_machine_translation(text: str) -> str:
     return meaning
 
 
+writer = csv.writer(sys.stdout, delimiter=";")
 text = Path(sys.argv[1]).read_text("utf-8")
+MAX_SENTENCES = int(sys.argv[2]) if len(sys.argv) > 2 else 2
+
 # NOTE: no check for empty lines or fields
 for line in text.splitlines()[1:]:
-    freq, word, readings, examples = line.split(";")
+    freq, word, readings, sentences = line.split(";")
     # TODO: if jmdic error skip it
-    word_jmdic = get_jmdic_translation(word) or "*no jmdic tr*"
-    # TODO: word_warodai = get_warodai_tr()
-    examples = examples.split(", ")  # NOTE: rarely there are commas (,) in subs
-    print(word, readings, word_jmdic, sep=" - ")
-    for ex in examples:
-        ex_tr = get_machine_translation(remove_text_in_braces(ex))
-        print(ex, ex_tr)
-    print()
+    word_en = get_jmdic_translation(word) or "no jmdic tr"
+    word_ru = ""  # TODO:  get_warodai_tr()
+    sentences = sentences.split(", ")
+    sentences_tr: list[str] = []
+    for ex in sentences:
+        # TODO: err handling
+        tr = get_machine_translation(remove_text_in_braces(ex))
+        sentences_tr.append(tr)
+
+    sentences = ". ".join(sentences[:MAX_SENTENCES])
+    sentences_tr = ". ".join(sentences_tr[:MAX_SENTENCES])
+
+    # Used `Kaishi 1.5k Russian` deck as template: https://github.com/NeonGooRoo/KaishiRu
+    writer.writerow(
+        [
+            word,  # Word
+            readings,  # Word Reading
+            word_en,  # Word Meaning
+            word_ru,  # Word Meaning (Russian)
+            "",  # Word Furigana
+            "",  # Word Audio
+            sentences,  # Sentence
+            "",  # Sentence Meaning
+            sentences_tr,  # Sentence Meaning (Russian)
+            "",  # Sentence Furigana
+            "",  # Sentence Audio
+            "",  # Notes
+            "",  # Notes (Russian)
+            "",  # Pitch Accent
+            "",  # Pitch Accent Notes
+            "",  # Pitch Accent Notes (Russian)
+            freq,  # Frequency
+            "",  # Tags
+        ]
+    )
