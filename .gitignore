@@ -5,6 +5,8 @@ __pycache__
 *.srt
 *.ass
 
+*.csv
+*.json
 *.txt
 !warodai_test_excerpt.txt
 !requirements.txt
