@@ -13,9 +13,9 @@ from dataclasses import field
 class Header:
     """Заголовок карточки/статьи с первеводом"""
 
-    kana: str
-    kanji: str | None  # FIXME: MAYBE MANY KANJIS
-    transcription: str
+    kana: list[str]
+    kanji: list[str] | None
+    transcription: list[str]
     corpus: str | None
     id: str
 
@@ -87,22 +87,22 @@ def get_warodai_translation(word: str) -> str:
     dictionary_entries = warodai.entries
 
     for entry in dictionary_entries:
+        kanji = entry.header.kanji
+        kana = entry.header.kana
         # print(f"Слово: {entry.header.kana}")
-        if word != entry.header.kana and word != str(entry.header.kanji):
-            continue
+        if word in kana or (kanji and word in kanji):
+            translations: list[str] = []
+            for i, section in enumerate(entry.sections, start=1):
+                # print(f"Секция: {i}.")
 
-        translations: list[str] = []
-        for i, section in enumerate(entry.sections, start=1):
-            # print(f"Секция: {i}.")
+                for j, rubric in enumerate(section.rubrics, start=1):
+                    translations.append(rubric.translation)
+                    # print(f" Перевод {j}: {rubric.translation}")
 
-            for j, rubric in enumerate(section.rubrics, start=1):
-                translations.append(rubric.translation)
-                # print(f" Перевод {j}: {rubric.translation}")
-
-                for k, example in enumerate(rubric.examples, start=1):
-                    pass
-                    # print(f"  Пример {k}. {example}")
-        return ". ".join(translations)
+                    for k, example in enumerate(rubric.examples, start=1):
+                        pass
+                        # print(f"  Пример {k}. {example}")
+            return ". ".join(translations)
 
         # print()
     return ""
